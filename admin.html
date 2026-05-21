@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Poli'Tips — Administration</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0F172A;
+    --navy-mid: #1E293B;
+    --navy-light: #334155;
+    --coral: #FF5A5F;
+    --coral-light: #FF8A8E;
+    --coral-dark: #E04045;
+    --green: #22C55E;
+    --gold: #F59E0B;
+    --blue: #3B82F6;
+    --purple: #8B5CF6;
+    --bg: #F1F5F9;
+    --card: #FFFFFF;
+    --border: #E2E8F0;
+    --text: #0F172A;
+    --muted: #64748B;
+    --sidebar-w: 260px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  h1, h2, h3, h4, .font-display { font-family: 'Syne', sans-serif; }
+
+  /* ── SIDEBAR ── */
+  #sidebar {
+    position: fixed; top: 0; left: 0; height: 100vh; width: var(--sidebar-w);
+    background: var(--navy); display: flex; flex-direction: column;
+    z-index: 100; box-shadow: 4px 0 24px rgba(15,23,42,0.18);
+    transition: transform .3s;
+  }
+  .sidebar-logo {
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+  .sidebar-logo .logo-text {
+    font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800;
+    color: #fff; letter-spacing: -.5px;
+  }
+  .sidebar-logo .logo-text span { color: var(--coral); }
+  .sidebar-logo .logo-sub {
+    font-size: 10px; color: rgba(255,255,255,.35);
+    font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 3px;
+  }
+  .nav-section { padding: 18px 14px 8px; }
+  .nav-section-label {
+    font-size: 9px; font-weight: 800; letter-spacing: 1.8px;
+    text-transform: uppercase; color: rgba(255,255,255,.25); padding: 0 10px; margin-bottom: 6px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px; padding: 11px 12px;
+    border-radius: 10px; cursor: pointer; transition: all .2s;
+    color: rgba(255,255,255,.55); font-size: 13.5px; font-weight: 500;
+    margin-bottom: 2px; user-select: none;
+  }
+  .nav-item:hover { background: rgba(255,255,255,.07); color: rgba(255,255,255,.85); }
+  .nav-item.active {
+    background: linear-gradient(135deg, rgba(255,90,95,.22), rgba(255,90,95,.1));
+    color: #fff; border: 1px solid rgba(255,90,95,.25);
+  }
+  .nav-item.active .nav-icon { color: var(--coral); }
+  .nav-icon { width: 18px; text-align: center; font-size: 14px; }
+  .nav-badge {
+    margin-left: auto; background: var(--coral); color: #fff;
+    font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 50px;
+  }
+  .sidebar-footer {
+    margin-top: auto; padding: 16px; border-top: 1px solid rgba(255,255,255,.08);
+  }
+  .sidebar-user {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+    border-radius: 10px; background: rgba(255,255,255,.06);
+  }
+  .user-avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--coral), #FF8A3D);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; color: #fff; font-weight: 700; flex-shrink: 0;
+  }
+  .user-name { font-size: 12px; font-weight: 700; color: #fff; }
+  .user-role { font-size: 10px; color: rgba(255,255,255,.4); }
+
+  /* ── MAIN ── */
+  #main { margin-left: var(--sidebar-w); padding: 32px; min-height: 100vh; }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 32px;
+  }
+  .topbar-title { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; }
+  .topbar-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .topbar-actions { display: flex; align-items: center; gap: 10px; }
+
+  /* ── VIEWS ── */
+  .view { display: none; }
+  .view.active { display: block; animation: fadeIn .25s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--card); border-radius: 16px;
+    border: 1.5px solid var(--border); box-shadow: 0 2px 12px rgba(15,23,42,.06);
+  }
+  .card-header {
+    padding: 18px 20px; border-bottom: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; }
+  .card-body { padding: 20px; }
+
+  /* ── KPI ── */
+  .kpi-card {
+    background: var(--card); border-radius: 16px; padding: 20px;
+    border: 1.5px solid var(--border); box-shadow: 0 2px 12px rgba(15,23,42,.06);
+    position: relative; overflow: hidden; transition: transform .2s, box-shadow .2s;
+  }
+  .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(15,23,42,.1); }
+  .kpi-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--accent-color, var(--coral));
+  }
+  .kpi-label { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: .6px; text-transform: uppercase; }
+  .kpi-value { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; line-height: 1.1; margin: 6px 0; }
+  .kpi-delta { font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+  .kpi-icon { position: absolute; top: 16px; right: 16px; font-size: 28px; opacity: .08; }
+  .kpi-icon-visible { position: absolute; top: 14px; right: 14px; width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+
+  /* ── BUTTONS ── */
+  .btn { border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 600; border-radius: 10px; transition: all .2s; display: inline-flex; align-items: center; gap: 7px; }
+  .btn:active { transform: scale(.97); }
+  .btn-primary { background: var(--navy); color: #fff; padding: 11px 20px; font-size: 13.5px; }
+  .btn-primary:hover { background: var(--navy-mid); }
+  .btn-coral { background: var(--coral); color: #fff; padding: 11px 20px; font-size: 13.5px; }
+  .btn-coral:hover { background: var(--coral-dark); }
+  .btn-ghost { background: var(--bg); color: var(--text); padding: 9px 16px; font-size: 13px; border: 1.5px solid var(--border); }
+  .btn-ghost:hover { background: #E2E8F0; }
+  .btn-danger { background: #FEF2F2; color: #DC2626; padding: 10px 18px; font-size: 13px; border: 1.5px solid #FCA5A5; }
+  .btn-danger:hover { background: #FEE2E2; }
+  .btn-success { background: #F0FDF4; color: #16A34A; padding: 10px 18px; font-size: 13px; border: 1.5px solid #86EFAC; }
+  .btn-success:hover { background: #DCFCE7; }
+  .btn-sm { padding: 7px 13px !important; font-size: 12px !important; }
+
+  /* ── TABLE ── */
+  .data-table { width: 100%; border-collapse: collapse; }
+  .data-table th {
+    text-align: left; padding: 11px 16px; font-size: 11px; font-weight: 800;
+    letter-spacing: .6px; text-transform: uppercase; color: var(--muted);
+    background: var(--bg); border-bottom: 1.5px solid var(--border);
+  }
+  .data-table td { padding: 13px 16px; font-size: 13.5px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tbody tr:hover { background: var(--bg); }
+
+  /* ── FORMS ── */
+  .form-label { display: block; font-size: 11.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%; padding: 10px 14px; border-radius: 10px; border: 1.5px solid var(--border);
+    font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text);
+    background: #fff; outline: none; transition: border-color .2s, box-shadow .2s;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color: var(--navy); box-shadow: 0 0 0 3px rgba(15,23,42,.08);
+  }
+  .form-textarea { resize: vertical; min-height: 90px; }
+
+  /* ── BADGES ── */
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 50px; font-size: 11px; font-weight: 700; }
+  .badge-green { background: #DCFCE7; color: #15803D; }
+  .badge-coral { background: #FFF1F2; color: #E11D48; }
+  .badge-blue { background: #EFF6FF; color: #1D4ED8; }
+  .badge-gold { background: #FFFBEB; color: #B45309; }
+  .badge-purple { background: #F5F3FF; color: #6D28D9; }
+  .badge-muted { background: var(--bg); color: var(--muted); border: 1px solid var(--border); }
+
+  /* ── RSS SIMULATION ── */
+  @keyframes scan { 0% { transform: translateY(-100%); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(100%); opacity: 0; } }
+  .scan-line { animation: scan 1.5s ease-in-out infinite; position: absolute; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--coral), transparent); }
+  @keyframes pulse-dot { 0%,100% { opacity:1; transform: scale(1); } 50% { opacity:.5; transform: scale(.8); } }
+  .pulse-dot { animation: pulse-dot .8s ease infinite; }
+  .terminal {
+    background: #0D1117; border-radius: 10px; font-family: 'Courier New', monospace;
+    font-size: 12px; line-height: 2; padding: 14px 16px; max-height: 220px; overflow-y: auto;
+    color: #58A6FF;
+  }
+  .terminal .t-ok { color: #3FB950; }
+  .terminal .t-warn { color: #D29922; }
+  .terminal .t-err { color: #F85149; }
+  .terminal .t-dim { color: #6E7681; }
+
+  /* ── SLIDER ── */
+  .affinity-slider { display: flex; flex-direction: column; gap: 6px; }
+  .affinity-row { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+  .affinity-row label { width: 100px; font-weight: 600; flex-shrink: 0; }
+  .affinity-row input[type=range] { flex: 1; accent-color: var(--navy); }
+  .affinity-row .val-display {
+    width: 30px; text-align: center; font-weight: 800; font-size: 13px;
+    color: var(--navy); background: var(--bg); border-radius: 6px; padding: 2px 4px;
+  }
+
+  /* ── TOAST ── */
+  #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+  .toast { background: var(--navy); color: #fff; padding: 12px 18px; border-radius: 10px; font-size: 13px; font-weight: 600; box-shadow: 0 4px 20px rgba(0,0,0,.2); animation: toastIn .3s ease; display: flex; align-items: center; gap: 8px; }
+  .toast.success { background: #15803D; }
+  .toast.error { background: #DC2626; }
+  .toast.info { background: var(--blue); }
+  @keyframes toastIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+  /* ── SCROLL ── */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 50px; }
+
+  /* ── MODAL ── */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.55); z-index: 500; display: flex; align-items: center; justify-content: center; animation: fadeIn .2s ease; }
+  .modal-box { background: #fff; border-radius: 18px; width: 540px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(15,23,42,.25); }
+  .modal-header { padding: 20px 22px; border-bottom: 1.5px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .modal-body { padding: 22px; }
+  .modal-footer { padding: 16px 22px; border-top: 1.5px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
+
+  /* ── MISC ── */
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+  .tag-chip { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 50px; font-size: 11px; font-weight: 700; background: var(--bg); border: 1.5px solid var(--border); color: var(--muted); margin: 2px; }
+  .trend-up { color: var(--green); }
+  .trend-down { color: var(--coral); }
+  .progress-track { height: 8px; background: var(--bg); border-radius: 50px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 50px; transition: width 1s ease; }
+  .dot-live { width: 8px; height: 8px; border-radius: 50%; background: var(--green); display: inline-block; animation: pulse-dot .8s ease infinite; }
+
+  /* ── MOBILE TOGGLE ── */
+  #sidebar-toggle { display: none; }
+  @media (max-width: 1024px) {
+    #sidebar { transform: translateX(-100%); }
+    #sidebar.open { transform: translateX(0); }
+    #main { margin-left: 0; padding: 20px; }
+    #sidebar-toggle { display: flex; }
+  }
+  @media (max-width: 640px) { .topbar-title { font-size: 20px; } }
+
+  /* ── SUPABASE BADGE ── */
+  .supabase-status {
+    display: flex; align-items: center; gap: 6px; padding: 6px 12px;
+    border-radius: 8px; background: var(--bg); border: 1.5px solid var(--border);
+    font-size: 12px; font-weight: 600;
+  }
+</style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<!-- ══════ SIDEBAR ══════ -->
+<aside id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-text">Poli<span>'</span>Tips</div>
+    <div class="logo-sub">Administration</div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Supervision</div>
+    <div class="nav-item active" onclick="switchView('dashboard')" id="nav-dashboard">
+      <i class="fa-solid fa-chart-line nav-icon"></i> Tableau de bord
+    </div>
+    <div class="nav-item" onclick="switchView('users')" id="nav-users">
+      <i class="fa-solid fa-users nav-icon"></i> Utilisateurs
+      <span class="nav-badge" id="badge-users">0</span>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Contenu</div>
+    <div class="nav-item" onclick="switchView('content')" id="nav-content">
+      <i class="fa-solid fa-layer-group nav-icon"></i> Cartes Swipe
+    </div>
+    <div class="nav-item" onclick="switchView('news')" id="nav-news">
+      <i class="fa-solid fa-newspaper nav-icon"></i> Actualités & RSS
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Configuration</div>
+    <div class="nav-item" onclick="switchView('settings')" id="nav-settings">
+      <i class="fa-solid fa-gear nav-icon"></i> Paramètres
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="user-avatar">A</div>
+      <div>
+        <div class="user-name">Admin</div>
+        <div class="user-role">Poli'Tips Team</div>
+      </div>
+      <i class="fa-solid fa-chevron-right" style="margin-left:auto;color:rgba(255,255,255,.25);font-size:11px;"></i>
+    </div>
+  </div>
+</aside>
+
+<!-- ══════ MAIN ══════ -->
+<main id="main">
+
+  <!-- Mobile toggle -->
+  <button id="sidebar-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')"
+    style="position:fixed;top:16px;left:16px;z-index:200;background:var(--navy);color:#fff;border:none;border-radius:10px;width:40px;height:40px;font-size:16px;cursor:pointer;align-items:center;justify-content:center;">
+    <i class="fa-solid fa-bars"></i>
+  </button>
+
+  <!-- ══ VIEW: DASHBOARD ══ -->
+  <div id="view-dashboard" class="view active">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">Tableau de bord 📊</div>
+        <div class="topbar-sub">Vue panoramique en temps réel · <span class="dot-live"></span> <span id="last-refresh-label">Chargement…</span></div>
+      </div>
+      <div class="topbar-actions">
+        <div class="supabase-status" id="db-status">
+          <span id="db-dot" style="width:8px;height:8px;border-radius:50%;background:#94A3B8;"></span>
+          <span id="db-label">Connexion…</span>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="refreshDashboard()"><i class="fa-solid fa-rotate-right"></i> Actualiser</button>
+      </div>
+    </div>
+
+    <!-- KPI row -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;" id="kpi-grid">
+      <div class="kpi-card" style="--accent-color:var(--blue);">
+        <span class="kpi-icon">👤</span>
+        <div class="kpi-label">Sessions uniques</div>
+        <div class="kpi-value" id="kpi-sessions">—</div>
+        <div class="kpi-delta trend-up" id="kpi-sessions-delta"><i class="fa-solid fa-arrow-trend-up"></i> Chargement…</div>
+      </div>
+      <div class="kpi-card" style="--accent-color:var(--coral);">
+        <span class="kpi-icon">👆</span>
+        <div class="kpi-label">Total Swipes</div>
+        <div class="kpi-value" id="kpi-swipes">—</div>
+        <div class="kpi-delta" id="kpi-swipes-delta"><i class="fa-solid fa-arrow-trend-up"></i> Chargement…</div>
+      </div>
+      <div class="kpi-card" style="--accent-color:var(--green);">
+        <span class="kpi-icon">✅</span>
+        <div class="kpi-label">Taux de complétion</div>
+        <div class="kpi-value" id="kpi-completion">—</div>
+        <div class="kpi-delta" id="kpi-completion-delta"><i class="fa-solid fa-chart-pie"></i> Chargement…</div>
+      </div>
+      <div class="kpi-card" style="--accent-color:var(--gold);">
+        <span class="kpi-icon">📰</span>
+        <div class="kpi-label">Articles lus</div>
+        <div class="kpi-value" id="kpi-reads">—</div>
+        <div class="kpi-delta" id="kpi-reads-delta"><i class="fa-solid fa-eye"></i> Chargement…</div>
+      </div>
+    </div>
+
+    <!-- Charts row -->
+    <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:16px;margin-bottom:24px;">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i class="fa-solid fa-chart-bar" style="color:var(--coral);margin-right:8px;"></i>Thématiques les plus actives</div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-ghost btn-sm" onclick="toggleThemeChart('bar')" id="btn-bar">Barres</button>
+            <button class="btn btn-ghost btn-sm" onclick="toggleThemeChart('line')" id="btn-line">Courbes</button>
+          </div>
+        </div>
+        <div class="card-body"><canvas id="chart-themes" height="180"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i class="fa-solid fa-circle-half-stroke" style="color:var(--blue);margin-right:8px;"></i>Affinités politiques</div>
+        </div>
+        <div class="card-body" style="display:flex;flex-direction:column;align-items:center;">
+          <canvas id="chart-affinity" height="180" style="max-width:220px;"></canvas>
+          <div id="affinity-legend" style="width:100%;margin-top:14px;display:flex;flex-direction:column;gap:5px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activity log -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="fa-solid fa-clock-rotate-left" style="color:var(--purple);margin-right:8px;"></i>Activité récente</div>
+        <span class="badge badge-green"><span class="dot-live"></span> Live</span>
+      </div>
+      <div id="activity-log" style="max-height:220px;overflow-y:auto;">
+        <table class="data-table">
+          <thead><tr><th>Événement</th><th>Détail</th><th>Parti lié</th><th>Horodatage</th></tr></thead>
+          <tbody id="activity-log-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ VIEW: USERS ══ -->
+  <div id="view-users" class="view">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">Supervision Utilisateurs 👥</div>
+        <div class="topbar-sub">Flux anonymisé des sessions actives</div>
+      </div>
+      <div class="topbar-actions">
+        <select class="form-select" id="filter-parti" onchange="renderUsersTable()" style="width:180px;">
+          <option value="">Tous les partis</option>
+          <option value="renaissance">Renaissance</option>
+          <option value="rn">RN</option>
+          <option value="lfi">LFI</option>
+          <option value="ps">PS</option>
+          <option value="lr">LR</option>
+          <option value="eelv">EELV</option>
+        </select>
+        <select class="form-select" id="filter-engagement" onchange="renderUsersTable()" style="width:180px;">
+          <option value="">Tous niveaux</option>
+          <option value="high">Élevé (8+ swipes)</option>
+          <option value="med">Moyen (3-7)</option>
+          <option value="low">Faible (0-2)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-body" style="padding:14px 16px;">
+        <div style="position:relative;">
+          <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);"></i>
+          <input class="form-input" id="user-search" placeholder="Rechercher par ID de session…" style="padding-left:36px;" oninput="renderUsersTable()">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Sessions actives</div>
+        <span class="badge badge-blue" id="users-count-badge">0 sessions</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="data-table" id="users-table">
+          <thead>
+            <tr>
+              <th>Session ID</th>
+              <th>Dernière action</th>
+              <th>Swipes</th>
+              <th>Affinité top</th>
+              <th>Badges</th>
+              <th>Engagement</th>
+            </tr>
+          </thead>
+          <tbody id="users-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ VIEW: CONTENT ══ -->
+  <div id="view-content" class="view">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">Gestionnaire Cartes Swipe 📝</div>
+        <div class="topbar-sub">CRUD complet des propositions politiques</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-coral" onclick="openPropModal(null)"><i class="fa-solid fa-plus"></i> Nouvelle proposition</button>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;" id="cat-stats-row"></div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Propositions en base</div>
+        <input class="form-input" id="prop-search" placeholder="Filtrer…" style="width:220px;" oninput="renderPropositionsTable()">
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead><tr><th>Proposition</th><th>Catégorie</th><th>Affinités</th><th>Swipes reçus</th><th>Actions</th></tr></thead>
+          <tbody id="props-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ VIEW: NEWS ══ -->
+  <div id="view-news" class="view">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">Actualités & Contrôle RSS 📰</div>
+        <div class="topbar-sub">Publication, simulation et gestion des flux</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+      <!-- Quick publish -->
+      <div class="card">
+        <div class="card-header"><div class="card-title"><i class="fa-brands fa-x-twitter" style="margin-right:8px;"></i>Publication rapide</div></div>
+        <div class="card-body">
+          <div style="margin-bottom:12px;">
+            <label class="form-label">Titre de l'actualité</label>
+            <input class="form-input" id="quick-title" placeholder="Titre accrocheur…" maxlength="100">
+          </div>
+          <div style="margin-bottom:12px;">
+            <label class="form-label">Contenu <span id="char-count" style="color:var(--muted);">0/280</span></label>
+            <textarea class="form-textarea" id="quick-content" placeholder="Résumé en 2-3 phrases…" maxlength="280" style="min-height:80px;" oninput="document.getElementById('char-count').textContent=this.value.length+'/280'"></textarea>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+            <div>
+              <label class="form-label">Parti associé</label>
+              <select class="form-select" id="quick-parti">
+                <option value="">Aucun</option>
+                <option value="renaissance">Renaissance</option>
+                <option value="rn">RN</option>
+                <option value="lfi">LFI</option>
+                <option value="ps">PS</option>
+                <option value="lr">LR</option>
+                <option value="eelv">EELV</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Tags (virgules)</label>
+              <input class="form-input" id="quick-tags" placeholder="#budget, #réforme…">
+            </div>
+          </div>
+          <button class="btn btn-coral" style="width:100%;" onclick="publishQuickNews()"><i class="fa-solid fa-paper-plane"></i> Publier l'actualité</button>
+        </div>
+      </div>
+
+      <!-- RSS Simulator -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i class="fa-solid fa-satellite-dish" style="color:var(--blue);margin-right:8px;"></i>Simulateur RSS</div>
+          <span class="badge badge-blue" id="rss-source-count">5 sources</span>
+        </div>
+        <div class="card-body">
+          <div style="margin-bottom:14px;display:flex;flex-direction:column;gap:6px;" id="rss-sources-display"></div>
+          <button class="btn btn-primary" id="btn-rss" onclick="simulerRSS()" style="width:100%;margin-bottom:10px;"><i class="fa-solid fa-rotate"></i> Simuler synchro RSS</button>
+          <button class="btn btn-danger" style="width:100%;" onclick="resetDemo()"><i class="fa-solid fa-trash-can"></i> Reset démo complet</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Terminal -->
+    <div class="card" style="margin-bottom:20px;" id="rss-terminal-card" style="display:none;">
+      <div class="card-header">
+        <div class="card-title" style="display:flex;align-items:center;gap:8px;">
+          <span class="dot-live" id="terminal-dot" style="display:none;"></span>
+          <span id="terminal-title">Logs de synchronisation</span>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="clearTerminal()"><i class="fa-solid fa-xmark"></i> Effacer</button>
+      </div>
+      <div class="card-body" style="padding:0;">
+        <div class="terminal" id="rss-terminal">&nbsp;</div>
+      </div>
+    </div>
+
+    <!-- Articles list -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Articles en base</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="badge badge-blue" id="articles-count-badge">0 articles</span>
+          <input class="form-input" id="article-search" placeholder="Filtrer articles…" style="width:200px;" oninput="renderArticlesTable()">
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead><tr><th>Titre</th><th>Source</th><th>Parti</th><th>Tags</th><th>Date</th><th>Statut</th><th></th></tr></thead>
+          <tbody id="articles-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ VIEW: SETTINGS ══ -->
+  <div id="view-settings" class="view">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">Paramètres ⚙️</div>
+        <div class="topbar-sub">Configuration Supabase et options globales</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+      <div class="card">
+        <div class="card-header"><div class="card-title"><i class="fa-solid fa-database" style="color:var(--green);margin-right:8px;"></i>Connexion Supabase</div></div>
+        <div class="card-body">
+          <div class="form-group" style="margin-bottom:14px;">
+            <label class="form-label">URL du projet</label>
+            <input class="form-input" id="sb-url" placeholder="https://xxxx.supabase.co" value="">
+          </div>
+          <div class="form-group" style="margin-bottom:14px;">
+            <label class="form-label">Clé publique (anon)</label>
+            <input class="form-input" id="sb-key" type="password" placeholder="eyJhbGc…">
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button class="btn btn-primary" onclick="saveSupabaseConfig()"><i class="fa-solid fa-floppy-disk"></i> Enregistrer</button>
+            <button class="btn btn-success" onclick="testSupabaseConnection()"><i class="fa-solid fa-plug"></i> Tester</button>
+          </div>
+          <div id="sb-test-result" style="margin-top:12px;font-size:13px;"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title"><i class="fa-solid fa-circle-info" style="color:var(--blue);margin-right:8px;"></i>Mode de données actuel</div></div>
+        <div class="card-body">
+          <div id="data-mode-info"></div>
+          <div class="divider"></div>
+          <div style="font-size:12.5px;color:var(--muted);line-height:1.7;">
+            Si aucune clé Supabase n'est configurée, l'administration fonctionne avec des données <strong>LocalStorage simulées</strong> persistantes sur cet appareil. Configurez Supabase pour une persistance multi-appareils.<br><br>
+            <strong>Tables attendues :</strong> <code>swipes</code>, <code>sessions</code>, <code>propositions</code>, <code>articles</code>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="fa-solid fa-shield-halved" style="color:var(--coral);margin-right:8px;"></i>Zone de danger</div></div>
+      <div class="card-body">
+        <div style="display:flex;flex-wrap:wrap;gap:12px;">
+          <button class="btn btn-danger" onclick="purgeSwipes()"><i class="fa-solid fa-trash"></i> Purger tous les swipes</button>
+          <button class="btn btn-danger" onclick="purgeSessions()"><i class="fa-solid fa-user-slash"></i> Purger les sessions</button>
+          <button class="btn btn-danger" onclick="purgeArticles()"><i class="fa-solid fa-newspaper"></i> Purger les articles RSS</button>
+          <button class="btn btn-danger" onclick="resetDemo()"><i class="fa-solid fa-rotate-left"></i> Reset démo complet</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ══ MODAL: Proposition ══ -->
+<div id="prop-modal" style="display:none;">
+  <div class="modal-overlay" onclick="closePropModal()">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="card-title" id="prop-modal-title" style="font-size:17px;">Nouvelle proposition</h3>
+        <button class="btn btn-ghost btn-sm" onclick="closePropModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="prop-edit-id">
+        <div style="margin-bottom:14px;">
+          <label class="form-label">Intitulé de la proposition *</label>
+          <input class="form-input" id="prop-text" placeholder="Ex: Instaurer le service militaire obligatoire…">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+          <div>
+            <label class="form-label">Catégorie *</label>
+            <select class="form-select" id="prop-cat">
+              <option value="Écologie">🌿 Écologie</option>
+              <option value="Économie">💰 Économie</option>
+              <option value="Défense">🛡️ Défense</option>
+              <option value="Santé">❤️ Santé</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label">Icône (emoji)</label>
+            <input class="form-input" id="prop-icon" placeholder="💡" maxlength="4">
+          </div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <label class="form-label">Contexte / Explication</label>
+          <textarea class="form-textarea" id="prop-ctx" placeholder="Expliquez brièvement la proposition en 2-3 phrases…"></textarea>
+        </div>
+        <div>
+          <label class="form-label" style="margin-bottom:10px;">Affinités partisanes (-1 Contre / 0 Neutre / +1 Pour)</label>
+          <div class="affinity-slider" id="affinity-sliders"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closePropModal()">Annuler</button>
+        <button class="btn btn-coral" onclick="saveProp()"><i class="fa-solid fa-floppy-disk"></i> Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════
+//  CONFIG — modifiez ces valeurs pour Supabase réel
+// ════════════════════════════════════════════════════
+let SUPABASE_URL = localStorage.getItem('pt_sb_url') || '';
+let SUPABASE_KEY = localStorage.getItem('pt_sb_key') || '';
+let supabaseClient = null;
+let USE_LOCAL = true; // basculé si Supabase est configuré
+
+// ════════════════════════════════════════════════════
+//  DONNÉES MOCK COMPLÈTES
+// ════════════════════════════════════════════════════
+const PARTIS = [
+  { id:'renaissance', nom:'Renaissance', sigle:'RE', couleur:'#3B82F6' },
+  { id:'rn',         nom:'Rassemblement National', sigle:'RN', couleur:'#1D4ED8' },
+  { id:'lfi',        nom:'La France Insoumise',    sigle:'LFI', couleur:'#EF4444' },
+  { id:'ps',         nom:'Parti Socialiste',        sigle:'PS', couleur:'#EC4899' },
+  { id:'lr',         nom:'Les Républicains',        sigle:'LR', couleur:'#6366F1' },
+  { id:'eelv',       nom:'EELV',                    sigle:'EELV', couleur:'#22C55E' }
+];
+
+const BASE_PROPOSITIONS = [
+  { id:1, intitule:"Instaurer le service militaire obligatoire pour les jeunes adultes", categorie:"Défense", contexte:"Proposé pour renforcer la cohésion nationale.", orientation_partis:{rn:1,lr:1,renaissance:0,ps:-1,lfi:-1,eelv:-1} },
+  { id:2, intitule:"Interdire les pesticides néonicotinoïdes d'ici 2026", categorie:"Écologie", contexte:"Ces insecticides sont accusés de décimer les populations d'abeilles.", orientation_partis:{rn:-1,lr:-1,renaissance:0,ps:1,lfi:1,eelv:1} },
+  { id:3, intitule:"Instaurer un revenu universel de base à 900€/mois", categorie:"Économie", contexte:"Versé à tous les citoyens sans condition.", orientation_partis:{rn:-1,lr:-1,renaissance:-1,ps:1,lfi:1,eelv:1} },
+  { id:4, intitule:"Rendre les transports en commun gratuits dans toutes les métropoles", categorie:"Écologie", contexte:"Dunkerque a montré une telle mesure augmente l'usage de +85%.", orientation_partis:{rn:0,lr:-1,renaissance:0,ps:1,lfi:1,eelv:1} },
+  { id:5, intitule:"Augmenter le budget de la Défense nationale à 3% du PIB", categorie:"Défense", contexte:"L'OTAN recommande 2% du PIB.", orientation_partis:{rn:1,lr:1,renaissance:1,ps:0,lfi:-1,eelv:-1} },
+  { id:6, intitule:"Rembourser à 100% les soins dentaires et optiques", categorie:"Santé", contexte:"La réforme 100% santé a amorcé ce chantier.", orientation_partis:{rn:1,lr:0,renaissance:0,ps:1,lfi:1,eelv:1} },
+  { id:7, intitule:"Nationaliser EDF et rouvrir des centrales nucléaires", categorie:"Économie", contexte:"L'énergie nucléaire représente ~70% de l'électricité française.", orientation_partis:{rn:1,lr:1,renaissance:1,ps:0,lfi:0,eelv:-1} },
+  { id:8, intitule:"Légaliser et encadrer le cannabis récréatif", categorie:"Santé", contexte:"Plusieurs pays européens ont légalisé.", orientation_partis:{rn:-1,lr:-1,renaissance:0,ps:0,lfi:1,eelv:1} },
+  { id:9, intitule:"Indexer toutes les pensions de retraite sur l'inflation", categorie:"Économie", contexte:"En 2023, la non-revalorisation complète a fait perdre du pouvoir d'achat.", orientation_partis:{rn:1,lr:0,renaissance:0,ps:1,lfi:1,eelv:0} },
+  { id:10, intitule:"Bannir la publicité pour les produits ultra-transformés aux enfants", categorie:"Santé", contexte:"L'OMS préconise cette mesure pour lutter contre l'obésité infantile.", orientation_partis:{rn:0,lr:0,renaissance:0,ps:1,lfi:1,eelv:1} }
+];
+
+const BASE_ARTICLES = [
+  { id:1001, titre:"Budget 2025 : le gouvernement Bayrou face au mur de la dette", source:"Le Monde", parti_id:"renaissance", date:"2025-01-20", tags:["budget","bayrou","dette"], is_new:true },
+  { id:1002, titre:"Réforme des retraites : Mélenchon appelle à une grève générale", source:"Le Monde", parti_id:"lfi", date:"2025-01-19", tags:["retraites","mélenchon","grève"], is_new:true },
+  { id:1003, titre:"Marine Le Pen : «La préférence nationale doit s'appliquer au logement»", source:"Le Monde", parti_id:"rn", date:"2025-01-18", tags:["le pen","rn","logement"], is_new:false },
+  { id:2001, titre:"Projet de loi de finances 2025 : les grandes lignes", source:"Vie-publique.fr", parti_id:"renaissance", date:"2025-01-20", tags:["budget","plf","finances"], is_new:true },
+  { id:3001, titre:"AFP — Bayrou maintient le cap sur le budget malgré les 49-3", source:"AFP", parti_id:"renaissance", date:"2025-01-20", tags:["bayrou","budget","49-3"], is_new:true },
+  { id:3002, titre:"AFP — Présidentielle 2027 : Bardella confirme sa candidature", source:"AFP", parti_id:"rn", date:"2025-01-19", tags:["bardella","rn","présidentielle"], is_new:true },
+  { id:4001, titre:"Écologie punitive : le grand débat qui fissure la majorité", source:"Libération", parti_id:"renaissance", date:"2025-01-20", tags:["écologie","majorité"], is_new:true },
+  { id:5001, titre:"Nucléaire : l'EPR2 de Penly entre en phase de construction", source:"Le Figaro", parti_id:"renaissance", date:"2025-01-20", tags:["nucléaire","epr2","énergie"], is_new:true }
+];
+
+const RSS_BATCH = [
+  { id:7001, titre:"Macron reçoit les syndicats à l'Élysée : dialogue ou trompe-l'œil ?", source:"Le Monde", parti_id:"renaissance", date:"2025-01-21", tags:["macron","syndicats","dialogue"], is_new:true },
+  { id:7002, titre:"Bardella : portrait d'un leader en route pour 2027", source:"Le Figaro", parti_id:"rn", date:"2025-01-21", tags:["bardella","rn","présidentielle"], is_new:true },
+  { id:7003, titre:"LFI : motion interne demande le départ de Mélenchon de la direction", source:"Libération", parti_id:"lfi", date:"2025-01-21", tags:["lfi","mélenchon","crise"], is_new:true },
+  { id:7004, titre:"Retailleau veut un pôle républicain regroupant LR, Horizons et macronistes", source:"AFP", parti_id:"lr", date:"2025-01-21", tags:["retailleau","lr","droite"], is_new:true },
+  { id:7005, titre:"Grève du 4 février : les transports en commun fortement perturbés", source:"AFP", parti_id:null, date:"2025-01-21", tags:["grève","transports","sncf"], is_new:true },
+  { id:7006, titre:"Le Pen : son procès en appel fixé au 15 mars 2025", source:"AFP", parti_id:"rn", date:"2025-01-21", tags:["le pen","justice","appel"], is_new:true },
+  { id:7007, titre:"EELV et PS s'affrontent sur la stratégie nucléaire au sein du NFP", source:"Libération", parti_id:"eelv", date:"2025-01-21", tags:["eelv","ps","nucléaire"], is_new:true }
+];
+
+const RSS_SOURCES_CONFIG = [
+  { id:'lemonde', nom:'Le Monde', url:'https://www.lemonde.fr/rss/une.xml', emoji:'📰', freq:'15 min' },
+  { id:'viepublique', nom:'Vie-publique.fr', url:'https://www.vie-publique.fr/rss-actualites.xml', emoji:'🏛️', freq:'30 min' },
+  { id:'afp', nom:'AFP — Politique', url:'https://www.afp.com/fr/rss/politique', emoji:'📡', freq:'5 min' },
+  { id:'liberation', nom:'Libération', url:'https://www.liberation.fr/arc/outboundfeeds/rss/', emoji:'🗞️', freq:'20 min' },
+  { id:'figaro', nom:'Le Figaro', url:'https://www.lefigaro.fr/rss/figaro_actualites.xml', emoji:'📋', freq:'20 min' }
+];
+
+const MOCK_SESSIONS_BASE = [
+  { id:'sess_a3f2k9', ts: Date.now() - 120000, swipes: 10, top_parti:'lfi', badges:['🔥','⭐️','🏆'] },
+  { id:'sess_b7h1m4', ts: Date.now() - 300000, swipes: 7, top_parti:'renaissance', badges:['🧐','🔥'] },
+  { id:'sess_c9p5n2', ts: Date.now() - 600000, swipes: 5, top_parti:'rn', badges:['🧐'] },
+  { id:'sess_d2x8q1', ts: Date.now() - 900000, swipes: 3, top_parti:'ps', badges:['🔰','🧐'] },
+  { id:'sess_e5t3r7', ts: Date.now() - 1800000, swipes: 10, top_parti:'eelv', badges:['🔥','⭐️'] },
+  { id:'sess_f8w6v4', ts: Date.now() - 3600000, swipes: 2, top_parti:'lr', badges:['🔰'] },
+  { id:'sess_g1j4k8', ts: Date.now() - 7200000, swipes: 8, top_parti:'renaissance', badges:['🔥','🏆'] },
+  { id:'sess_h3n7p2', ts: Date.now() - 14400000, swipes: 6, top_parti:'lfi', badges:['🧐','🔥'] },
+  { id:'sess_i6m9r5', ts: Date.now() - 21600000, swipes: 4, top_parti:'ps', badges:['🧐'] },
+  { id:'sess_j9s2t1', ts: Date.now() - 43200000, swipes: 10, top_parti:'rn', badges:['🔥','⭐️','🏆'] }
+];
+
+const MOCK_ACTIVITY_LOG = [
+  { event:'Swipe', detail:'Prop #3 — Économie', parti:'lfi', ts: Date.now() - 8000 },
+  { event:'Article lu', detail:'Budget 2025 (Le Monde)', parti:'renaissance', ts: Date.now() - 25000 },
+  { event:'Favori ajouté', detail:'Parti LFI mis en favori', parti:'lfi', ts: Date.now() - 40000 },
+  { event:'Swipe', detail:'Prop #7 — Économie', parti:'renaissance', ts: Date.now() - 65000 },
+  { event:'Swipe', detail:'Prop #2 — Écologie', parti:'eelv', ts: Date.now() - 90000 },
+  { event:'Article lu', detail:'EPR2 Penly (Le Figaro)', parti:'renaissance', ts: Date.now() - 120000 },
+  { event:'Badge débloqué', detail:'🔥 Swipeur fou', parti:null, ts: Date.now() - 180000 },
+  { event:'Swipe', detail:'Prop #1 — Défense', parti:'rn', ts: Date.now() - 240000 }
+];
+
+// ════════════════════════════════════════════════════
+//  LOCAL STATE
+// ════════════════════════════════════════════════════
+let db = {
+  propositions: JSON.parse(localStorage.getItem('pt_admin_props') || 'null') || [...BASE_PROPOSITIONS],
+  articles: JSON.parse(localStorage.getItem('pt_admin_articles') || 'null') || [...BASE_ARTICLES],
+  sessions: JSON.parse(localStorage.getItem('pt_admin_sessions') || 'null') || [...MOCK_SESSIONS_BASE],
+  swipes: JSON.parse(localStorage.getItem('pt_admin_swipes') || '[]'),
+  activityLog: [...MOCK_ACTIVITY_LOG]
+};
+
+function saveDB() {
+  localStorage.setItem('pt_admin_props', JSON.stringify(db.propositions));
+  localStorage.setItem('pt_admin_articles', JSON.stringify(db.articles));
+  localStorage.setItem('pt_admin_sessions', JSON.stringify(db.sessions));
+  localStorage.setItem('pt_admin_swipes', JSON.stringify(db.swipes));
+}
+
+// ════════════════════════════════════════════════════
+//  SUPABASE
+// ════════════════════════════════════════════════════
+function initSupabase() {
+  if (!SUPABASE_URL || !SUPABASE_KEY) { setDBStatus('local'); return; }
+  try {
+    supabaseClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_KEY);
+    if (supabaseClient) { USE_LOCAL = false; setDBStatus('connected'); showToast('Supabase connecté ✅', 'success'); }
+  } catch(e) { setDBStatus('local'); }
+}
+
+function setDBStatus(state) {
+  const dot = document.getElementById('db-dot');
+  const label = document.getElementById('db-label');
+  if (state === 'connected') { dot.style.background = '#22C55E'; label.textContent = 'Supabase connecté'; }
+  else if (state === 'error') { dot.style.background = '#EF4444'; label.textContent = 'Erreur Supabase'; }
+  else { dot.style.background = '#F59E0B'; label.textContent = 'Mode local'; }
+  updateDataModeInfo();
+}
+
+function saveSupabaseConfig() {
+  SUPABASE_URL = document.getElementById('sb-url').value.trim();
+  SUPABASE_KEY = document.getElementById('sb-key').value.trim();
+  localStorage.setItem('pt_sb_url', SUPABASE_URL);
+  localStorage.setItem('pt_sb_key', SUPABASE_KEY);
+  initSupabase();
+  showToast('Configuration sauvegardée', 'success');
+}
+
+function testSupabaseConnection() {
+  const res = document.getElementById('sb-test-result');
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    res.innerHTML = '<span style="color:var(--coral);">⚠️ Veuillez renseigner URL et clé avant de tester.</span>';
+    return;
+  }
+  res.innerHTML = '<span style="color:var(--blue);">🔄 Test en cours…</span>';
+  fetch(SUPABASE_URL + '/rest/v1/', { headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY } })
+    .then(r => {
+      if (r.ok || r.status === 404) { res.innerHTML = '<span style="color:var(--green);">✅ Connexion réussie — projet Supabase accessible.</span>'; setDBStatus('connected'); }
+      else { res.innerHTML = `<span style="color:var(--coral);">❌ Erreur HTTP ${r.status}. Vérifiez vos identifiants.</span>`; setDBStatus('error'); }
+    })
+    .catch(() => { res.innerHTML = '<span style="color:var(--coral);">❌ Impossible de joindre le projet. URL incorrecte ?</span>'; setDBStatus('error'); });
+}
+
+function updateDataModeInfo() {
+  const el = document.getElementById('data-mode-info');
+  if (!el) return;
+  const isLocal = !supabaseClient;
+  el.innerHTML = `<div style="display:flex;align-items:center;gap:10px;padding:14px;border-radius:10px;background:${isLocal?'#FFFBEB':'#F0FDF4'};border:1.5px solid ${isLocal?'#FCD34D':'#86EFAC'};">
+    <span style="font-size:24px;">${isLocal?'💾':'☁️'}</span>
+    <div>
+      <div style="font-weight:700;font-size:14px;">${isLocal?'Mode LocalStorage (simulation)':'Mode Supabase (production)'}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px;">${isLocal?'Données persistantes localement sur cet appareil.':'Données synchronisées en temps réel avec Supabase.'}</div>
+    </div>
+  </div>`;
+}
+
+// ════════════════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════════════════
+function switchView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+  if (name === 'dashboard') refreshDashboard();
+  if (name === 'users') { renderUsersTable(); }
+  if (name === 'content') { renderPropositionsTable(); renderCatStats(); }
+  if (name === 'news') { renderArticlesTable(); renderRSSSources(); }
+  if (name === 'settings') { document.getElementById('sb-url').value = SUPABASE_URL; document.getElementById('sb-key').value = SUPABASE_KEY; updateDataModeInfo(); }
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+// ════════════════════════════════════════════════════
+//  DASHBOARD — KPIs & Charts
+// ════════════════════════════════════════════════════
+let chartThemes = null, chartAffinity = null;
+
+function refreshDashboard() {
+  const now = new Date();
+  document.getElementById('last-refresh-label').textContent = 'Actualisé à ' + now.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+  const totalSessions = db.sessions.length;
+  const totalSwipes = db.sessions.reduce((s, u) => s + u.swipes, 0) + db.swipes.length;
+  const maxSwipes = db.propositions.length || 10;
+  const avgCompletion = totalSessions > 0 ? Math.round((db.sessions.reduce((s,u) => s + Math.min(u.swipes / maxSwipes, 1), 0) / totalSessions) * 100) : 0;
+  const articlesRead = db.articles.filter(a => !a.is_new).length + 5;
+
+  document.getElementById('kpi-sessions').textContent = totalSessions;
+  document.getElementById('kpi-sessions-delta').innerHTML = `<i class="fa-solid fa-arrow-trend-up"></i> +${Math.floor(Math.random()*3+1)} aujourd'hui`;
+  document.getElementById('kpi-sessions-delta').className = 'kpi-delta trend-up';
+
+  document.getElementById('kpi-swipes').textContent = totalSwipes.toLocaleString('fr-FR');
+  document.getElementById('kpi-swipes-delta').innerHTML = `<i class="fa-solid fa-arrow-trend-up"></i> Moy. ${(totalSwipes / Math.max(totalSessions,1)).toFixed(1)}/session`;
+  document.getElementById('kpi-swipes-delta').className = 'kpi-delta trend-up';
+
+  document.getElementById('kpi-completion').textContent = avgCompletion + '%';
+  document.getElementById('kpi-completion-delta').innerHTML = `<i class="fa-solid fa-chart-pie"></i> Sur ${maxSwipes} cartes max.`;
+
+  document.getElementById('kpi-reads').textContent = articlesRead;
+  document.getElementById('kpi-reads-delta').innerHTML = `<i class="fa-solid fa-eye"></i> ${db.articles.filter(a=>a.is_new).length} non lus`;
+  document.getElementById('kpi-reads-delta').className = 'kpi-delta';
+
+  document.getElementById('badge-users').textContent = totalSessions;
+
+  drawThemeChart('bar');
+  drawAffinityChart();
+  renderActivityLog();
+}
+
+function drawThemeChart(type) {
+  const cats = ['Écologie', 'Économie', 'Défense', 'Santé'];
+  const colors = ['#22C55E', '#3B82F6', '#EF4444', '#F59E0B'];
+  const data = cats.map(c => {
+    const props = db.propositions.filter(p => p.categorie === c).length;
+    const votes = db.sessions.reduce((s,u) => s + Math.round(u.swipes * (0.15 + Math.random() * 0.15)), 0);
+    return props * 12 + votes + Math.floor(Math.random() * 20);
+  });
+
+  const ctx = document.getElementById('chart-themes');
+  if (chartThemes) chartThemes.destroy();
+  chartThemes = new Chart(ctx, {
+    type,
+    data: {
+      labels: cats.map((c,i) => `${['🌿','💰','🛡️','❤️'][i]} ${c}`),
+      datasets: [{
+        label: 'Activité (swipes)',
+        data,
+        backgroundColor: type === 'bar' ? colors.map(c => c + '44') : 'transparent',
+        borderColor: colors,
+        borderWidth: 2.5,
+        borderRadius: type === 'bar' ? 8 : 0,
+        fill: type === 'line',
+        tension: 0.4,
+        pointBackgroundColor: colors
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, grid: { color: '#F1F5F9' }, ticks: { font: { family: 'DM Sans' } } },
+        x: { grid: { display: false }, ticks: { font: { family: 'DM Sans', size: 12 } } }
+      }
+    }
+  });
+}
+
+function toggleThemeChart(t) { drawThemeChart(t); }
+
+function drawAffinityChart() {
+  const affinityScores = {};
+  PARTIS.forEach(p => affinityScores[p.id] = Math.random() * 30 + 5);
+  // If real swipes exist, compute them
+  db.swipes.forEach(sw => {
+    const prop = db.propositions.find(p => p.id === sw.prop_id);
+    if (!prop || sw.choix === 'neutre') return;
+    const userVote = sw.choix === 'pour' ? 1 : -1;
+    Object.entries(prop.orientation_partis).forEach(([parti, pos]) => {
+      if (userVote === pos) affinityScores[parti] = (affinityScores[parti] || 0) + 2;
+    });
+  });
+  const total = Object.values(affinityScores).reduce((a,b) => a+b, 0);
+
+  const ctx = document.getElementById('chart-affinity');
+  if (chartAffinity) chartAffinity.destroy();
+  chartAffinity = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: PARTIS.map(p => p.sigle),
+      datasets: [{
+        data: PARTIS.map(p => affinityScores[p.id] || 1),
+        backgroundColor: PARTIS.map(p => p.couleur),
+        borderWidth: 3,
+        borderColor: '#fff',
+        hoverBorderWidth: 0
+      }]
+    },
+    options: {
+      cutout: '65%', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      animation: { animateRotate: true, duration: 900 }
+    }
+  });
+
+  // Legend
+  const legendEl = document.getElementById('affinity-legend');
+  legendEl.innerHTML = PARTIS.map(p => {
+    const pct = Math.round((affinityScores[p.id] / total) * 100);
+    return `<div style="display:flex;align-items:center;gap:8px;">
+      <div style="width:10px;height:10px;border-radius:50%;background:${p.couleur};flex-shrink:0;"></div>
+      <span style="font-size:12px;font-weight:600;flex:1;">${p.sigle}</span>
+      <div style="flex:2;"><div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:${p.couleur};"></div></div></div>
+      <span style="font-size:12px;font-weight:800;color:${p.couleur};width:36px;text-align:right;">${pct}%</span>
+    </div>`;
+  }).join('');
+}
+
+function renderActivityLog() {
+  const tbody = document.getElementById('activity-log-body');
+  const events = [...db.activityLog].reverse().slice(0, 8);
+  tbody.innerHTML = events.map(e => {
+    const parti = PARTIS.find(p => p.id === e.parti);
+    const badge = parti ? `<span class="badge" style="background:${parti.couleur}20;color:${parti.couleur};">${parti.sigle}</span>` : '<span class="badge badge-muted">—</span>';
+    const ago = timeAgo(e.ts);
+    const icons = { 'Swipe':'👆', 'Article lu':'📖', 'Favori ajouté':'❤️', 'Badge débloqué':'🏆' };
+    return `<tr>
+      <td><span style="font-weight:600;">${icons[e.event] || '•'} ${e.event}</span></td>
+      <td style="color:var(--muted);font-size:13px;">${e.detail}</td>
+      <td>${badge}</td>
+      <td style="color:var(--muted);font-size:12px;">${ago}</td>
+    </tr>`;
+  }).join('');
+}
+
+function timeAgo(ts) {
+  const diff = Date.now() - ts;
+  if (diff < 60000) return 'À l'instant';
+  if (diff < 3600000) return `${Math.floor(diff/60000)} min`;
+  if (diff < 86400000) return `${Math.floor(diff/3600000)}h`;
+  return `${Math.floor(diff/86400000)}j`;
+}
+
+// ════════════════════════════════════════════════════
+//  USERS TABLE
+// ════════════════════════════════════════════════════
+function renderUsersTable() {
+  const search = document.getElementById('user-search')?.value.toLowerCase() || '';
+  const filterParti = document.getElementById('filter-parti')?.value || '';
+  const filterEng = document.getElementById('filter-engagement')?.value || '';
+
+  let sessions = [...db.sessions];
+  if (search) sessions = sessions.filter(s => s.id.toLowerCase().includes(search));
+  if (filterParti) sessions = sessions.filter(s => s.top_parti === filterParti);
+  if (filterEng === 'high') sessions = sessions.filter(s => s.swipes >= 8);
+  if (filterEng === 'med') sessions = sessions.filter(s => s.swipes >= 3 && s.swipes < 8);
+  if (filterEng === 'low') sessions = sessions.filter(s => s.swipes < 3);
+
+  document.getElementById('users-count-badge').textContent = `${sessions.length} session${sessions.length > 1 ? 's' : ''}`;
+
+  const tbody = document.getElementById('users-table-body');
+  if (sessions.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:30px;">Aucune session correspondante.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = sessions.map(s => {
+    const parti = PARTIS.find(p => p.id === s.top_parti);
+    const pctCompletion = Math.round(Math.min(s.swipes / (db.propositions.length || 10), 1) * 100);
+    const engLevel = s.swipes >= 8 ? ['Élevé', 'badge-green'] : s.swipes >= 3 ? ['Moyen', 'badge-gold'] : ['Faible', 'badge-muted'];
+    const partiBadge = parti ? `<span class="badge" style="background:${parti.couleur}20;color:${parti.couleur};">${parti.sigle}</span>` : '<span class="badge badge-muted">—</span>';
+    const ago = timeAgo(s.ts);
+    return `<tr>
+      <td><code style="font-size:12px;background:var(--bg);padding:3px 8px;border-radius:6px;">${s.id}</code></td>
+      <td style="color:var(--muted);font-size:13px;">${ago}</td>
+      <td><strong>${s.swipes}</strong> <span style="color:var(--muted);font-size:11px;">/ ${db.propositions.length}</span></td>
+      <td>${partiBadge}</td>
+      <td style="font-size:18px;">${(s.badges || []).join(' ')}</td>
+      <td><span class="badge ${engLevel[1]}">${engLevel[0]}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════
+//  PROPOSITIONS TABLE + MODAL
+// ════════════════════════════════════════════════════
+function renderPropositionsTable() {
+  const search = (document.getElementById('prop-search')?.value || '').toLowerCase();
+  let props = [...db.propositions];
+  if (search) props = props.filter(p => p.intitule.toLowerCase().includes(search) || p.categorie.toLowerCase().includes(search));
+
+  const tbody = document.getElementById('props-table-body');
+  tbody.innerHTML = props.map(p => {
+    const catColor = {Écologie:'badge-green',Économie:'badge-blue',Défense:'badge-coral',Santé:'badge-gold'}[p.categorie] || 'badge-muted';
+    const affinités = Object.entries(p.orientation_partis).map(([id,val]) => {
+      if (val === 0) return null;
+      const pt = PARTIS.find(x => x.id === id);
+      if (!pt) return null;
+      return `<span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;background:${val>0?pt.couleur+'20':'#FFF1F2'};color:${val>0?pt.couleur:'var(--coral)'};">${val>0?'+':''}${val} ${pt.sigle}</span>`;
+    }).filter(Boolean).join(' ');
+    const swipeCount = Math.floor(Math.random() * 20 + 2);
+    return `<tr>
+      <td>
+        <div style="font-weight:600;font-size:13.5px;max-width:300px;">${p.intitule.slice(0, 65)}${p.intitule.length > 65 ? '…' : ''}</div>
+        ${p.contexte ? `<div style="font-size:12px;color:var(--muted);margin-top:3px;">${p.contexte.slice(0,70)}…</div>` : ''}
+      </td>
+      <td><span class="badge ${catColor}">${p.categorie}</span></td>
+      <td style="max-width:220px;line-height:1.8;">${affinités}</td>
+      <td><strong>${swipeCount}</strong></td>
+      <td>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-ghost btn-sm" onclick="openPropModal(${p.id})"><i class="fa-solid fa-pen"></i></button>
+          <button class="btn btn-danger btn-sm" onclick="deleteProp(${p.id})"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderCatStats() {
+  const cats = [
+    { name:'Écologie', icon:'🌿', color:'#22C55E', bg:'#F0FDF4', count: db.propositions.filter(p=>p.categorie==='Écologie').length },
+    { name:'Économie', icon:'💰', color:'#3B82F6', bg:'#EFF6FF', count: db.propositions.filter(p=>p.categorie==='Économie').length },
+    { name:'Défense',  icon:'🛡️', color:'#EF4444', bg:'#FFF1F2', count: db.propositions.filter(p=>p.categorie==='Défense').length },
+    { name:'Santé',    icon:'❤️', color:'#F59E0B', bg:'#FFFBEB', count: db.propositions.filter(p=>p.categorie==='Santé').length }
+  ];
+  document.getElementById('cat-stats-row').innerHTML = `
+    <div style="grid-column:span 4;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+      ${cats.map(c => `<div class="kpi-card" style="--accent-color:${c.color};padding:16px 18px;">
+        <div style="font-size:28px;margin-bottom:6px;">${c.icon}</div>
+        <div class="kpi-label">${c.name}</div>
+        <div class="kpi-value" style="font-size:28px;">${c.count}</div>
+        <div style="font-size:11px;color:var(--muted);">propositions</div>
+      </div>`).join('')}
+    </div>`;
+}
+
+function openPropModal(id) {
+  const modal = document.getElementById('prop-modal');
+  const existing = id ? db.propositions.find(p => p.id === id) : null;
+  document.getElementById('prop-modal-title').textContent = existing ? 'Modifier la proposition' : 'Nouvelle proposition';
+  document.getElementById('prop-edit-id').value = id || '';
+  document.getElementById('prop-text').value = existing?.intitule || '';
+  document.getElementById('prop-cat').value = existing?.categorie || 'Écologie';
+  document.getElementById('prop-ctx').value = existing?.contexte || '';
+  document.getElementById('prop-icon').value = '';
+
+  // Build sliders
+  const orient = existing?.orientation_partis || {};
+  document.getElementById('affinity-sliders').innerHTML = PARTIS.map(p => {
+    const val = orient[p.id] !== undefined ? orient[p.id] : 0;
+    return `<div class="affinity-row">
+      <label style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;border-radius:50%;background:${p.couleur};display:inline-block;"></span>${p.sigle}</label>
+      <input type="range" min="-1" max="1" step="1" value="${val}" id="slider-${p.id}"
+        oninput="this.nextElementSibling.textContent=(['–','0','+'][parseInt(this.value)+1])">
+      <div class="val-display">${['-','0','+'][val + 1]}</div>
+    </div>`;
+  }).join('');
+
+  modal.style.display = 'flex';
+}
+
+function closePropModal() { document.getElementById('prop-modal').style.display = 'none'; }
+
+function saveProp() {
+  const text = document.getElementById('prop-text').value.trim();
+  const cat = document.getElementById('prop-cat').value;
+  const ctx = document.getElementById('prop-ctx').value.trim();
+  const editId = parseInt(document.getElementById('prop-edit-id').value);
+  if (!text) { showToast('⚠️ Texte requis', 'error'); return; }
+
+  const orient = {};
+  PARTIS.forEach(p => {
+    const slider = document.getElementById('slider-' + p.id);
+    orient[p.id] = slider ? parseInt(slider.value) : 0;
+  });
+
+  if (editId) {
+    const idx = db.propositions.findIndex(p => p.id === editId);
+    if (idx >= 0) db.propositions[idx] = { ...db.propositions[idx], intitule: text, categorie: cat, contexte: ctx, orientation_partis: orient };
+    showToast('Proposition mise à jour ✅', 'success');
+  } else {
+    db.propositions.push({ id: Date.now(), intitule: text, categorie: cat, contexte: ctx, orientation_partis: orient });
+    showToast('Proposition ajoutée ✅', 'success');
+  }
+  saveDB();
+  closePropModal();
+  renderPropositionsTable();
+  renderCatStats();
+  db.activityLog.push({ event: editId ? 'Prop. modifiée' : 'Prop. ajoutée', detail: text.slice(0,40), parti: null, ts: Date.now() });
+}
+
+function deleteProp(id) {
+  if (!confirm('Supprimer cette proposition ?')) return;
+  db.propositions = db.propositions.filter(p => p.id !== id);
+  saveDB();
+  renderPropositionsTable();
+  renderCatStats();
+  showToast('Proposition supprimée', 'info');
+}
+
+// ════════════════════════════════════════════════════
+//  NEWS & RSS
+// ════════════════════════════════════════════════════
+function renderRSSSources() {
+  document.getElementById('rss-sources-display').innerHTML = RSS_SOURCES_CONFIG.map(s =>
+    `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);">
+      <span style="font-size:16px;">${s.emoji}</span>
+      <div style="flex:1;">
+        <div style="font-size:12.5px;font-weight:700;">${s.nom}</div>
+        <div style="font-size:10px;color:var(--muted);">${s.url}</div>
+      </div>
+      <span class="badge badge-green" style="font-size:9px;">● Actif</span>
+      <span style="font-size:11px;color:var(--muted);">${s.freq}</span>
+    </div>`).join('');
+}
+
+function renderArticlesTable() {
+  const search = (document.getElementById('article-search')?.value || '').toLowerCase();
+  let articles = [...db.articles];
+  if (search) articles = articles.filter(a => a.titre.toLowerCase().includes(search) || a.source.toLowerCase().includes(search));
+
+  document.getElementById('articles-count-badge').textContent = `${articles.length} article${articles.length > 1 ? 's' : ''}`;
+
+  const tbody = document.getElementById('articles-table-body');
+  tbody.innerHTML = articles.map(a => {
+    const parti = PARTIS.find(p => p.id === a.parti_id);
+    const partiBadge = parti ? `<span class="badge" style="background:${parti.couleur}20;color:${parti.couleur};">${parti.sigle}</span>` : '<span class="badge badge-muted">—</span>';
+    const tagsHtml = (a.tags || []).slice(0,3).map(t => `<span class="tag-chip">${t}</span>`).join('');
+    return `<tr>
+      <td style="max-width:260px;"><div style="font-weight:600;font-size:13px;">${a.titre.slice(0,60)}${a.titre.length>60?'…':''}</div></td>
+      <td style="font-size:12px;color:var(--muted);">${a.source}</td>
+      <td>${partiBadge}</td>
+      <td style="font-size:11px;">${tagsHtml}</td>
+      <td style="font-size:12px;color:var(--muted);">${new Date(a.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}</td>
+      <td>${a.is_new ? '<span class="badge badge-coral">Nouveau</span>' : '<span class="badge badge-muted">Lu</span>'}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteArticle(${a.id})"><i class="fa-solid fa-trash"></i></button></td>
+    </tr>`;
+  }).join('');
+}
+
+function publishQuickNews() {
+  const titre = document.getElementById('quick-title').value.trim();
+  const content = document.getElementById('quick-content').value.trim();
+  const parti = document.getElementById('quick-parti').value || null;
+  const tagsRaw = document.getElementById('quick-tags').value;
+  const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim().replace(/^#/, '')) : [];
+  if (!titre) { showToast('⚠️ Titre requis', 'error'); return; }
+  const article = { id: Date.now(), titre, summary: content || '—', source: 'Backoffice', parti_id: parti, date: new Date().toISOString().split('T')[0], tags, is_new: true };
+  db.articles.unshift(article);
+  saveDB();
+  renderArticlesTable();
+  document.getElementById('quick-title').value = '';
+  document.getElementById('quick-content').value = '';
+  document.getElementById('quick-tags').value = '';
+  document.getElementById('char-count').textContent = '0/280';
+  showToast('📰 Actualité publiée !', 'success');
+  db.activityLog.push({ event: 'Article publié', detail: titre.slice(0,40), parti, ts: Date.now() });
+}
+
+function deleteArticle(id) {
+  db.articles = db.articles.filter(a => a.id !== id);
+  saveDB();
+  renderArticlesTable();
+  showToast('Article supprimé', 'info');
+}
+
+let rssRunning = false;
+function simulerRSS() {
+  if (rssRunning) return;
+  rssRunning = true;
+  const btn = document.getElementById('btn-rss');
+  const terminalCard = document.getElementById('rss-terminal-card');
+  const terminal = document.getElementById('rss-terminal');
+  const termDot = document.getElementById('terminal-dot');
+  const termTitle = document.getElementById('terminal-title');
+
+  terminalCard.style.display = 'block';
+  terminal.innerHTML = '';
+  termDot.style.display = 'inline-block';
+  termTitle.textContent = 'Synchronisation en cours…';
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-rotate fa-spin"></i> Synchronisation…';
+
+  function log(msg, cls = '') {
+    terminal.innerHTML += `<div class="${cls}">${msg}</div>`;
+    terminal.scrollTop = terminal.scrollHeight;
+  }
+
+  const steps = [
+    [200,  () => log('<span class="t-dim">[2025-01-21 ' + new Date().toLocaleTimeString('fr-FR') + ']</span> Démarrage session de scraping RSS…')],
+    [500,  () => log('<span class="t-dim">[INFO]</span> Résolution DNS des endpoints configurés…')],
+    [800,  () => log('<span class="t-ok">[OK]   </span> Le Monde — flux récupéré (8 794 bytes, 23 items)')],
+    [1000, () => log('<span class="t-ok">[OK]   </span> Vie-publique.fr — flux récupéré (5 231 bytes, 14 items)')],
+    [1200, () => log('<span class="t-ok">[OK]   </span> AFP — flux récupéré (12 406 bytes, 41 items)')],
+    [1400, () => log('<span class="t-ok">[OK]   </span> Libération — flux récupéré (7 818 bytes, 18 items)')],
+    [1600, () => log('<span class="t-ok">[OK]   </span> Le Figaro — flux récupéré (9 102 bytes, 22 items)')],
+    [1900, () => log('<span class="t-dim">[INFO]</span> Parsing XML… 118 articles bruts détectés')],
+    [2100, () => log('<span class="t-dim">[INFO]</span> Application filtres mots-clés : [politique, assemblée, gouvernement, parlement…]')],
+    [2400, () => log('<span class="t-dim">[INFO]</span> Déduplication des articles existants en base…')],
+    [2700, () => log('<span class="t-dim">[INFO]</span> Analyse NLP entités nommées (partis, ministres, lois)…')],
+    [3000, () => log('<span class="t-dim">[INFO]</span> Enrichissement automatique tags thématiques…')],
+    [3200, () => log('<span class="t-warn">[WARN] </span> 2 articles sans affiliation partisane → étiquetés "neutre"')],
+    [3500, () => log('<span class="t-ok">[OK]   </span> 7 nouveaux articles éligibles après filtrage')],
+    [3700, () => log('<span class="t-ok">[OK]   </span> Insertion en base… 7/7 articles traités ✓')],
+    [3900, () => log('<span class="t-ok">[OK]   </span> Index de recherche mis à jour')],
+    [4100, () => {
+      log(`<span class="t-ok">[OK]   </span> <strong>Synchro terminée — ${new Date().toLocaleTimeString('fr-FR')} ✓</strong>`);
+      // Inject articles
+      const existingIds = new Set(db.articles.map(a => a.id));
+      const toAdd = RSS_BATCH.filter(a => !existingIds.has(a.id));
+      toAdd.forEach(a => db.articles.unshift({ ...a, is_new: true }));
+      saveDB();
+      renderArticlesTable();
+      termDot.style.display = 'none';
+      termTitle.textContent = `Logs — ${toAdd.length} articles injectés`;
+      btn.disabled = false;
+      btn.innerHTML = `<i class="fa-solid fa-check"></i> Synchronisé — ${toAdd.length} articles ajoutés`;
+      rssRunning = false;
+      showToast(`📡 ${toAdd.length} articles RSS injectés !`, 'success');
+      db.activityLog.push({ event: 'Synchro RSS', detail: `${toAdd.length} articles injectés`, parti: null, ts: Date.now() });
+      setTimeout(() => { btn.innerHTML = '<i class="fa-solid fa-rotate"></i> Simuler synchro RSS'; }, 3000);
+    }]
+  ];
+  steps.forEach(([delay, fn]) => setTimeout(fn, delay));
+}
+
+function clearTerminal() {
+  document.getElementById('rss-terminal').innerHTML = '&nbsp;';
+  document.getElementById('rss-terminal-card').style.display = 'none';
+}
+
+// ════════════════════════════════════════════════════
+//  DANGER ZONE
+// ════════════════════════════════════════════════════
+function purgeSwipes() {
+  if (!confirm('Purger tous les swipes ?')) return;
+  db.swipes = [];
+  db.sessions.forEach(s => { s.swipes = 0; s.badges = []; });
+  saveDB();
+  showToast('Swipes purgés', 'info');
+  refreshDashboard();
+}
+
+function purgeSessions() {
+  if (!confirm('Purger toutes les sessions ?')) return;
+  db.sessions = [];
+  saveDB();
+  document.getElementById('badge-users').textContent = '0';
+  showToast('Sessions purgées', 'info');
+  refreshDashboard();
+}
+
+function purgeArticles() {
+  if (!confirm('Purger tous les articles RSS ?')) return;
+  db.articles = [...BASE_ARTICLES];
+  saveDB();
+  renderArticlesTable();
+  showToast('Articles purgés — base de démonstration restaurée', 'info');
+}
+
+function resetDemo() {
+  if (!confirm('Réinitialiser toute la démo ? (Swipes, sessions et articles remis à zéro)')) return;
+  db.swipes = [];
+  db.sessions = [...MOCK_SESSIONS_BASE.map(s => ({ ...s, ts: Date.now() - (Date.now() - s.ts) }))];
+  db.articles = [...BASE_ARTICLES];
+  db.propositions = [...BASE_PROPOSITIONS];
+  db.activityLog = [...MOCK_ACTIVITY_LOG];
+  saveDB();
+  renderArticlesTable();
+  refreshDashboard();
+  renderUsersTable();
+  renderPropositionsTable();
+  showToast('🔄 Démo complètement réinitialisée', 'success');
+}
+
+// ════════════════════════════════════════════════════
+//  TOAST
+// ════════════════════════════════════════════════════
+let toastQueue = [];
+function showToast(msg, type = '') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  const icons = { success:'✅', error:'❌', info:'ℹ️', '':'💬' };
+  toast.innerHTML = `<span>${icons[type]||'💬'}</span> ${msg}`;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(20px)';
+    toast.style.transition = 'all .3s';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+// ════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  // Restore Supabase settings
+  const savedUrl = localStorage.getItem('pt_sb_url');
+  const savedKey = localStorage.getItem('pt_sb_key');
+  if (savedUrl) SUPABASE_URL = savedUrl;
+  if (savedKey) SUPABASE_KEY = savedKey;
+  initSupabase();
+  if (USE_LOCAL) setDBStatus('local');
+
+  // Init charts & dashboard
+  refreshDashboard();
+
+  // Simulate live activity feed
+  setInterval(() => {
+    if (document.getElementById('view-dashboard').classList.contains('active')) {
+      const events = ['Swipe','Article lu','Swipe','Favori ajouté','Swipe'];
+      const partisIds = PARTIS.map(p => p.id);
+      const props = db.propositions;
+      const randProp = props[Math.floor(Math.random() * props.length)];
+      db.activityLog.push({
+        event: events[Math.floor(Math.random() * events.length)],
+        detail: `Prop #${randProp?.id} — ${randProp?.categorie || 'Général'}`,
+        parti: partisIds[Math.floor(Math.random() * partisIds.length)],
+        ts: Date.now()
+      });
+      if (db.activityLog.length > 50) db.activityLog.shift();
+      renderActivityLog();
+    }
+  }, 5000);
+
+  // Auto-refresh KPIs every 30s
+  setInterval(() => {
+    if (document.getElementById('view-dashboard').classList.contains('active')) {
+      refreshDashboard();
+    }
+  }, 30000);
+});
+</script>
+</body>
+</html>
